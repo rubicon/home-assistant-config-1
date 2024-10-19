@@ -9,61 +9,62 @@
 #
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Vacuum: started cleaning"
-  trigger:
-    platform: state
-    entity_id: vacuum.xiaomi_vacuum_cleaner
+  triggers:
+    trigger: state
+    entity_id: vacuum.valetudo_vacuum
     from: docked
     to: cleaning
-  action:
-    service: notify.all_iphones
-    data:
-      title: "Robot"
-      message: "Robot started to clean!"
-
-- alias: "Vacuum: stopped cleaning"
-  trigger:
-    platform: state
-    entity_id: vacuum.xiaomi_vacuum_cleaner
-    from: returning
-    to: docked
-  action:
-    - service: notify.all_iphones
+  actions:
+    - action: notify.all_iphones
       data:
         title: "Robot"
-        message: "Cleanup successful after {{ state_attr('vacuum.xiaomi_vacuum_cleaner', 'cleaning_time') }} minutes."
-    - service: input_boolean.turn_on
+        message: "Robot started to clean!"
+    - action: input_datetime.set_datetime
+      data:
+        entity_id: input_datetime.vacuum_on
+        datetime: "{{ now().isoformat() }}"
+
+- alias: "Vacuum: stopped cleaning"
+  triggers:
+    trigger: state
+    entity_id: vacuum.valetudo_vacuum
+    from: returning
+    to: docked
+  actions:
+    - action: input_boolean.turn_on
       entity_id: input_boolean.cleaned_today
+    - action: input_datetime.set_datetime
+      data:
+        entity_id: input_datetime.vacuum_off
+        datetime: "{{ now().isoformat() }}"
+    - action: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Cleanup successful after {{ (states('sensor.robot_vacuum_last_clean_duration') | int / 60) | round }} minutes"
 
 - alias: "Vacuum: reminder notification"
-  trigger:
-    platform: time
+  triggers:
+    trigger: time
     at: "08:00"
-  condition:
+  conditions:
     condition: state
     entity_id: binary_sensor.vacuum_day
     state: "on"
-  action:
-    service: notify.all_iphones
+  actions:
+    action: notify.all_iphones
     data:
       title: "Robot"
       message: "Vacuum will go today, make sure to leave the doors open and leave nothing on the floor!"
 
 - alias: "Vacuum: cleanup if nobody is home"
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "13:00"
-    - platform: state
+    - trigger: state
       entity_id: group.persons
       from: home
       to: not_home
-    - platform: state
-      entity_id: binary_sensor.openclose_guest_room
-      from: "off"
-      to: "on"
-  condition:
-    - condition: state
-      entity_id: binary_sensor.openclose_guest_room
-      state: "on"
+  conditions:
     - condition: time
       after: "13:00:00"
       before: "22:00:00"
@@ -82,26 +83,26 @@
     - condition: state
       entity_id: input_boolean.vacation_mode
       state: "off"
-  action:
-    service: vacuum.start
-    entity_id: vacuum.xiaomi_vacuum_cleaner
+  actions:
+    action: vacuum.start
+    entity_id: vacuum.valetudo_vacuum
 
 - alias: "Vacuum: reset cleaned today"
   initial_state: "on"
-  trigger:
-    platform: time
+  triggers:
+    trigger: time
     at: "00:00:00"
-  action:
-    service: input_boolean.turn_off
+  actions:
+    action: input_boolean.turn_off
     entity_id: input_boolean.cleaned_today
 
 - alias: "Vacuum: reset to standard mode"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: vacuum.living_room
     to: docked
-  action:
-    service: vacuum.set_fan_speed
-    entity_id: vacuum.xiaomi_vacuum_cleaner
+  actions:
+    action: vacuum.set_fan_speed
+    entity_id: vacuum.valetudo_vacuum
     data:
       fan_speed: Standard

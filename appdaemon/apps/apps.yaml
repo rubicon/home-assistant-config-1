@@ -12,7 +12,7 @@ start_spotify:
   class: StartSpotify
   volume: 0.3
   speaker: media_player.kef_ls50
-  spotify_source: LS50 Wireless
+  spotify_source: KEF LS50
   playlist: "spotify:playlist:6rPTm9dYftKcFAfwyRqmDZ"
   input_boolean: input_boolean.start_spotify_on_kef_ls50
 
@@ -76,7 +76,7 @@ cube:
 battery_monitor:
   module: battery_monitor
   class: BatteryMonitor
-  service: mobile_app_basnijholt_iphone
+  service: iphone_bas
   low_level: 20
 
 average_bed_time:

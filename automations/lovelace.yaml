@@ -10,9 +10,9 @@
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Lovelace: convert lovelace.json to lovelace-ui.yaml"
   initial_state: "on"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: sensor.lovelace
-  action:
-    - service: shell_command.convert_lovelace
-    - service: shell_command.chores  # to update the ASCII art
+  actions:
+    - action: shell_command.convert_lovelace
+    - action: shell_command.chores  # to update the ASCII art

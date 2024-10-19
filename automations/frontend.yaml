@@ -9,43 +9,42 @@
 #
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Frontend: turn on dark mode"
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "20:00"
-    - platform: sun
+    - trigger: sun
       event: sunset
-  condition: "{{ is_state('input_boolean.dark_mode', 'off') }}"
-  action:
+  conditions: "{{ is_state('input_boolean.dark_mode', 'off') }}"
+  actions:
     entity_id: input_boolean.dark_mode
-    service: input_boolean.turn_on
+    action: input_boolean.turn_on
 
 - alias: "Frontend: turn on light mode"
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "06:00"
-    - platform: sun
+    - trigger: sun
       event: sunrise
-  condition: "{{ is_state('input_boolean.dark_mode', 'on') }}"
-  action:
+  conditions: "{{ is_state('input_boolean.dark_mode', 'on') }}"
+  actions:
     entity_id: input_boolean.dark_mode
-    service: input_boolean.turn_off
+    action: input_boolean.turn_off
 
 - alias: "Frontend: change theme"
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_select.theme
-    - platform: state
+    - trigger: state
       entity_id: input_boolean.dark_mode
-    - platform: state
+    - trigger: state
       entity_id: input_boolean.theme_alternative
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-  action:
-    service: frontend.set_theme
+  actions:
+    action: frontend.set_theme
     data:
       name: >
+        {% set which = "dark" if is_state("input_boolean.dark_mode", "on") else "light" -%}
         {% set name = states("input_select.theme") -%}
         {% set suffix = "-alternative" if is_state("input_boolean.theme_alternative", "on") else "" -%}
-        ios-{{ name }}{{ suffix }}
-      mode: >
-        {{ "dark" if is_state("input_boolean.dark_mode", "on") else "light" }}
+        ios-{{ which }}-mode-{{ name }}{{ suffix }}

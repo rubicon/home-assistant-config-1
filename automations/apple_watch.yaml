@@ -9,27 +9,29 @@
 #
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Apple Watch: Play or Pause the TV"
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Play TV
-  condition:
+  conditions:
     condition: state
     entity_id: media_player.tv
     state: "on"
-  action:
-    service: media_player.media_play_pause
-    entity_id: media_player.tv
+  actions:
+    action: media_player.media_play_pause
+    target:
+      entity_id: |
+        media_player.{{ 'xbox' if is_state_attr('media_player.tv', 'source', 'XBOX') else 'tv'}}
 
 - alias: "Apple Watch: minimal lights bedroom"
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Minimal lights bedroom
-  action:
-    service: light.turn_on
+  actions:
+    action: light.turn_on
     data:
       entity_id:
         - light.philips_go
@@ -38,146 +40,233 @@
       color_name: red
 
 - alias: "Apple Watch: fix TV sound"
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Fix TV sound
-  action:
-    service: script.fix_sound
+  actions:
+    action: script.fix_sound
 
 - alias: "Apple Watch: set sleep mode"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Set sleep mode
-  action:
+  actions:
     - variables:
         iphone: "notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-', '_') }}"
-    - service: "{{ iphone }}"
+    - action: "{{ iphone }}"
       data:
         message: "Apple Watch: set sleep mode."
         data:
-          push:
-            category: SET_SLEEP_MODE
+          actions:
+            - action: SLEEP_OFF
+              title: "Off"
+            - action: SLEEP_HALF
+              title: Half
+            - action: SLEEP_TOTAL
+              title: Total
     - wait_for_trigger:
-        platform: event
-        event_type: ios.notification_action_fired
-        event_data:
-          categoryName: SET_SLEEP_MODE
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SLEEP_OFF
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SLEEP_HALF
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SLEEP_TOTAL
       timeout: "00:00:20"
       continue_on_timeout: false
     - variables:
-        event: "{{ wait.trigger.event.data.actionName.lower() }}"
-    - service: input_select.select_option
+        event: "{{ wait.trigger.event.data.action.lower().split('_')[1] }}"
+    - action: input_select.select_option
       data:
         entity_id: input_select.sleep_mode
         option: "{{ event }}"
 
 - alias: "Apple Watch: set lights"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Set lights
-  action:
+  actions:
     - variables:
         iphone: "notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-', '_') }}"
-    - service: "{{ iphone }}"
+    - action: "{{ iphone }}"
       data:
         message: "Apple Watch: set lights"
         data:
-          push:
-            category: SET_LIGHTS
+          actions:
+            - action: SET_LIGHTS_ALL
+              title: All
+            - action: SET_LIGHTS_BEDROOM
+              title: Bedroom
+            - action: SET_LIGHTS_LIVING_ROOM
+              title: Living room
+            - action: SET_LIGHTS_BATHROOM
+              title: Bathroom
+            - action: SET_LIGHTS_HALL
+              title: Hall
+            - action: SET_LIGHTS_TOILET
+              title: Toilet
+            - action: SET_LIGHTS_KITCHEN
+              title: Kitchen
     - wait_for_trigger:
-        platform: event
-        event_type: ios.notification_action_fired
-        event_data:
-          categoryName: SET_LIGHTS
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_ALL
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_BEDROOM
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_LIVING_ROOM
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_BATHROOM
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_HALL
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_TOILET
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: SET_LIGHTS_KITCHEN
       timeout: "00:00:20"
       continue_on_timeout: false
     - variables:
         light: >
           {{
-            {'ALL': 'all',
-             'BEDROOM': 'light.bedroom_lights',
-             'LIVING_ROOM': 'light.living_room_lights',
-             'BATHROOM': 'light.ceiling_bathroom',
-             'HALL_AND_STAIRS': 'light.hall_lights,light.stairs_lights',
-             'TOILET': 'light.toilet',
-             'KITCHEN': 'light.kitchen_lights',
-            }[wait.trigger.event.data.actionName] }}
-    - service: "{{ iphone }}"
+            {'SET_LIGHTS_ALL': 'all',
+             'SET_LIGHTS_BEDROOM': 'light.bedroom_lights',
+             'SET_LIGHTS_LIVING_ROOM': 'light.living_room_lights',
+             'SET_LIGHTS_BATHROOM': 'light.bathroom_ceiling',
+             'SET_LIGHTS_HALL': 'light.hall_lights,light.stairs_lights',
+             'SET_LIGHTS_TOILET': 'light.toilet',
+             'SET_LIGHTS_KITCHEN': 'light.kitchen_lights',
+            }[wait.trigger.event.data.action] }}
+    - action: "{{ iphone }}"
       data:
         message: "Apple Watch: choose option"
         data:
-          push:
-            category: LIGHT_OPTIONS
+          actions:
+            - action: LIGHTS_OFF
+              title: "Off"
+            - action: LIGHTS_ON
+              title: "On"
+            - action: LIGHTS_FIFTY
+              title: "50%"
+            - action: LIGHTS_HUNDRED
+              title: "100%"
+            - action: LIGHTS_ONE
+              title: "1%"
+            - action: LIGHTS_WHITE
+              title: White lights
+            - action: LIGHTS_COZY
+              title: Cozy lights
     - wait_for_trigger:
-        platform: event
-        event_type: ios.notification_action_fired
-        event_data:
-          categoryName: LIGHT_OPTIONS
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_OFF
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_ON
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_FIFTY
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_HUNDRED
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_ONE
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_WHITE
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: LIGHTS_COZY
       timeout: "00:00:20"
       continue_on_timeout: false
     - variables:
-        option: "{{ wait.trigger.event.data.actionName }}"
+        option: "{{ wait.trigger.event.data.action }}"
     - choose:
-        - conditions: "{{ option == 'OFF' }}"
+        - conditions: "{{ option == 'LIGHTS_OFF' }}"
           sequence:
-            service: light.turn_off
+            action: light.turn_off
             data:
               entity_id: "{{ light }}"
-        - conditions: "{{ option == 'ON' }}"
+        - conditions: "{{ option == 'LIGHTS_ON' }}"
           sequence:
-            service: script.turn_on_lights
+            action: script.turn_on_lights
             data:
               entity_id: "{{ light }}"
-        - conditions: "{{ option == 'FIFTY' }}"
+        - conditions: "{{ option == 'LIGHTS_FIFTY' }}"
           sequence:
-            service: light.turn_on
+            action: light.turn_on
             data:
               entity_id: "{{ light }}"
               brightness_pct: 50
-        - conditions: "{{ option == 'HUNDRED' }}"
+        - conditions: "{{ option == 'LIGHTS_HUNDRED' }}"
           sequence:
-            service: light.turn_on
+            action: light.turn_on
             data:
               entity_id: "{{ light }}"
               brightness_pct: 100
-        - conditions: "{{ option == 'ONE' }}"
+        - conditions: "{{ option == 'LIGHTS_ONE' }}"
           sequence:
-            service: light.turn_on
+            action: light.turn_on
             data:
               entity_id: "{{ light }}"
               brightness_pct: 1
-        - conditions: "{{ option == 'WHITE' and light == 'light.living_room_lights'}}"
+        - conditions: "{{ option == 'LIGHTS_WHITE' and light == 'light.living_room_lights'}}"
           sequence:
-            service: script.white_lights_living_room
-        - conditions: "{{ option == 'WHITE' and light == 'light.bedroom_lights'}}"
+            action: script.white_lights_living_room
+        - conditions: "{{ option == 'LIGHTS_WHITE' and light == 'light.bedroom_lights'}}"
           sequence:
-            service: script.white_lights_living_room
-        - conditions: "{{ option == 'COZY' and light == 'light.living_room_lights'}}"
+            action: script.white_lights_living_room
+        - conditions: "{{ option == 'LIGHTS_COZY' and light == 'light.living_room_lights'}}"
           sequence:
-            service: script.cozy_lights_living_room
-        - conditions: "{{ option == 'COZY' and light == 'light.bedroom_lights'}}"
+            action: script.cozy_lights_living_room
+        - conditions: "{{ option == 'LIGHTS_COZY' and light == 'light.bedroom_lights'}}"
           sequence:
-            service: script.cozy_lights_bedroom
+            action: script.cozy_lights_bedroom
 
 - alias: "Apple Watch: temperature report"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Temperature report
-  action:
+  actions:
     - variables:
         iphone: "notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-', '_') }}"
-    - service: "{{ iphone }}"
+    - action: "{{ iphone }}"
       data:
         title: "Temperature"
         message: >
@@ -189,15 +278,15 @@
 
 - alias: "Apple Watch: portfolio value"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Portfolio value
-  action:
+  actions:
     - variables:
-        iphone: "notify.mobile_app_basnijholt_iphone"
-    - service: "{{ iphone }}"
+        iphone: "notify.iphone_bas"
+    - action: "{{ iphone }}"
       data:
         title: Portfolio value
         message: >
@@ -205,95 +294,173 @@
 
 - alias: "Apple Watch: send vacuum cleaner"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Vacuum
-  action:
+  actions:
     - variables:
         iphone: "notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-', '_') }}"
-    - service: "{{ iphone }}"
+    - action: "{{ iphone }}"
       data:
         message: "Apple Watch: vacuum"
         data:
-          push:
-            category: VACUUM_LOCATIONS
+          actions:
+            - action: VACUUM_LIVING_ROOM
+              title: Living room
+            - action: VACUUM_BEDROOM
+              title: Bedroom
+            - action: VACUUM_OFFICE
+              title: Office
+            - action: VACUUM_HALL
+              title: Hall
+            - action: VACUUM_KITCHEN
+              title: Kitchen
+            - action: VACUUM_ALL
+              title: All
+            - action: VACUUM_STOP
+              title: Stop and return
     - wait_for_trigger:
-        platform: event
-        event_type: ios.notification_action_fired
-        event_data:
-          categoryName: VACUUM_LOCATIONS
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_LIVING_ROOM
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_BEDROOM
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_OFFICE
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_HALL
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_KITCHEN
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_ALL
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: VACUUM_STOP
       timeout: "00:00:20"
       continue_on_timeout: false
     - variables:
-        location: "{{ wait.trigger.event.data.actionName.lower() }}"
-    - service: script.vacuum_command
+        location: "{{ wait.trigger.event.data.action.lower().split('vacuum_')[1] }}"
+    - action: script.vacuum_command
       data:
         option: "{{ location }}"
 
 - alias: "Apple Watch: movie time"
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Movie time
-  action:
-    - service: light.turn_on
+  actions:
+    - action: light.turn_on
       data:
         entity_id:
           - light.living_room_lights
         brightness: 5
         color_name: red
-    - service: light.turn_on
+    - action: light.turn_off
+      data:
+        entity_id:
+          - light.marble
+    - action: light.turn_on
       data:
         entity_id:
           - light.tv_led
         brightness: 20
 
 - alias: "Apple Watch: reset adaptive lighting"
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Reset adaptive lighting
-  action:
-    service: script.reset_adaptive_lighting
+  actions:
+    action: script.reset_adaptive_lighting
 
 - alias: "Apple Watch: set temperature"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Set temperature
-  action:
+  actions:
     - variables:
         iphone: "notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-', '_') }}"
-    - service: "{{ iphone }}"
+    - action: "{{ iphone }}"
       data:
         message: "Apple Watch: set temperature"
         data:
-          push:
-            category: SET_TEMPERATURE
+          actions:
+            - action: T15
+              title: "15"
+            - action: T16
+              title: "16"
+            - action: T17
+              title: "17"
+            - action: T18
+              title: "18"
+            - action: T19
+              title: "19"
+            - action: T20
+              title: "20"
+            - action: T21
+              title: "21"
     - wait_for_trigger:
-        platform: event
-        event_type: ios.notification_action_fired
-        event_data:
-          categoryName: SET_TEMPERATURE
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T15
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T16
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T17
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T18
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T19
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T20
+        - trigger: event
+          event_type: mobile_app_notification_action
+          event_data:
+            action: T21
       timeout: "00:00:20"
       continue_on_timeout: false
     - variables:
-        temperature: "{{ wait.trigger.event.data.actionName.split('T')[1] | int }}"
-    - service: climate.set_temperature
+        temperature: "{{ wait.trigger.event.data.action.split('T')[1] | int }}"
+    - action: climate.set_temperature
       data:
         entity_id: climate.thermostat
         temperature: "{{ temperature }}"
 
 - alias: "Apple Watch: where is other person?"
   mode: parallel
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: ios.action_fired
     event_data:
       actionName: Where is
@@ -306,8 +473,8 @@
       {% endif %}
     other_person: "{% if phone == 'basnijholt' %}Marcella{% else %}Bas{% endif %}"
     device_tracker: "device_tracker.{{ other_person }}_iphone"
-  action:
-    service: "notify.mobile_app_{{ phone }}_iphone"
+  actions:
+    action: "notify.mobile_app_{{ phone }}_iphone"
     data:
       message: "{{ other_person }} is {{ distance('device_tracker.basnijholt_iphone', 'device_tracker.marcella_iphone') | round(2) }} km away"
       data:

@@ -10,12 +10,94 @@
 #- from github.com/basnijholt/home-assistant-config
 
 - alias: "Notifications: Marcella arrived at Rotterdam Centraal"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: device_tracker.marcella_iphone
     to: rotterdam_centraal
-  action:
-    service: notify.mobile_app_basnijholt_iphone
+  actions:
+    action: notify.iphone_bas
     data:
       title: "Arriving"
       message: "Marcella arrived at Rotterdam Centraal"
+
+- alias: "Notifications: front door has opened"
+  triggers:
+    trigger: state
+    entity_id: binary_sensor.openclose_front_door
+    to: "on"
+  conditions:
+    condition: state
+    entity_id: input_boolean.front_door_open_warning
+    state: "on"
+  actions:
+    - action: notify.mobile_app_basnijholt_iphone_13
+      data:
+        title: Security
+        message: Front door opened!
+    - action: notify.iphone_bas
+      data:
+        title: Security
+        message: Front door opened!
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.front_door_open_warning
+
+- alias: "Notifications: Daily New Word Notification"
+  triggers:
+    - trigger: time
+      at: "07:30:00"
+  actions:
+    - action: notify.mobile_app_marcella_iphone_14_pro
+      data:
+        title: "Daily new word"
+        message: >
+          {% set words = [
+            "Mama",
+            "Baby",
+            "Dog",
+            "Cat",
+            "Ball",
+            "Car",
+            "Book",
+            "Milk",
+            "Juice",
+            "Water",
+            "Apple",
+            "Banana",
+            "Eat",
+            "More",
+            "No",
+            "Yes",
+            "Please",
+            "Thank you",
+            "Hi",
+            "Bye",
+            "Night-night",
+            "Bath",
+            "Diaper",
+            "Shoe",
+            "Hat",
+            "Ear",
+            "Nose",
+            "Eye",
+            "Hand",
+          ] %}
+          {% set word = words | random %}
+          {{ word }}
+        data:
+          actions:
+            - action: "AGREE_WORD"
+              title: "Great word!"
+              activationMode: background
+              authenticationRequired: true
+              destructive: true
+    - wait_for_trigger:
+        trigger: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: "AGREE_WORD"
+      timeout: "01:00:00"
+      continue_on_timeout: false
+
+    - action: notify.mobile_app_marcella_iphone_14_pro
+      data:
+        message: "We all love you! ❤️😘🥰💖💕🌷🌼🌈✨🎉🍀"

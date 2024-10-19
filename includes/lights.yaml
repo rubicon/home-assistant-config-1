@@ -11,58 +11,64 @@
 - platform: group
   name: Living room lights
   entities:
-    - light.sphere_1
+    - light.sphere_tv
     - light.sphere_2
-    - light.corner_living_room
-    - light.ceiling_living_room
+    - light.living_room_corner
     - light.tv_led
+    - light.cabinet_led
+    - light.mid_room
+    - light.shelve
+    - light.marble
 
 - platform: group
   name: Bedroom lights
   entities:
     - light.philips_go
-    - light.bamboo
-    - light.ceiling_bedroom
-    - light.lampan
     - light.bed_led
-    - light.bed_reading_up
-    - light.bed_reading_down
+
+- platform: group
+  name: Baby room lights
+  entities:
+    - light.baby_room
+    - light.bamboo
 
 - platform: group
   name: Automatic lights
   entities:
-    - light.ceiling_kitchen
-    - light.kitchen_counter
-    - light.toilet
-    - light.ceiling_bathroom
-    - light.hall_lights
-    - light.stairs_lights
+    - light.utility_room
+    - light.garage_outside
+    - light.outside_front_door
+    - light.front_house
+    - light.bedroom_outside
+    - light.string_lights_outside
+
+- platform: group
+  name: Guest room lights
+  entities:
+    - light.guest_room
+    - light.desk_led
 
 - platform: group
   name: Kitchen lights
   entities:
-    - light.ceiling_kitchen
-    - light.kitchen_counter
+    - light.dinner_area
 
 - platform: switch
-  name: Kitchen counter
-  entity_id: switch.kitchen_counter
+  name: Baby sphere
+  entity_id: switch.baby_sphere
 
-- platform: group
-  name: Stairs lights
-  entities:
-    - light.stairs_up
-    - light.stairs_down
+- platform: switch
+  name: Guest room
+  entity_id: switch.guest_room
 
-- platform: group
-  name: Hall lights
-  entities:
-    - light.hall_1
-    - light.hall_2
-    - light.hall_3
+# - platform: group
+#   name: Bathroom lights
+#   entities:
+#     - light.bathroom_ceiling
+#     - light.bathroom_mirror
 
-- platform: group
-  name: Bed reading
-  entities:
-    - light.bed_reading_up
-    - light.bed_reading_down
+# - platform: group
+#   name: Bed reading
+#   entities:
+#     - light.bed_reading_up
+#     - light.bed_reading_down

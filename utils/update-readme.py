@@ -175,6 +175,7 @@ def get_emoji(title):
         "Alarm clock": "⏰",
         "Apple Watch": "⌚",
         "Arriving": "👞",
+        "Bike": "🚲",
         "Climate": "🔥🥶",
         "Control switches": "🎛",
         "Cube": "∛",
@@ -185,6 +186,7 @@ def get_emoji(title):
         "Light": "💡",
         "Lovelace": "👨‍💻",
         "LSX": "🔈",
+        "Mailbox": "📫📣",
         "Media player": "🔈📺",
         "Music": "🎵",
         "Night mode": "🌕🌑",
@@ -235,7 +237,8 @@ def get_addons():
         return None
     raw = output.decode("utf-8")
     addons = json.loads(raw)["data"]
-    installed_addons = [addon for addon in addons["addons"] if addon["installed"]]
+    from pprint import pprint
+    installed_addons = addons["addons"]
     return installed_addons
 
 

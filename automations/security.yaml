@@ -9,98 +9,175 @@
 #
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Security: motion detected but we are not home"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: binary_sensor.motion_detected
     from: "off"
     to: "on"
-  condition:
+  conditions:
     - condition: state
       entity_id: group.persons
       state: not_home
     - condition: state
-      entity_id: vacuum.xiaomi_vacuum_cleaner
+      entity_id: vacuum.valetudo_vacuum
       state: "docked"
-  action:
-    - service: notify.all_iphones
+  actions:
+    - action: notify.all_iphones
       data:
         message: "Security: motion is detected, but we are not home."
         data:
-          push:
-            category: sound_alarm
+          actions:
+            - action: SOUND_ALARM
+              title: Sound alarm
+              activationMode: background
+              authenticationRequired: true
+              destructive: true
     - wait_for_trigger:
-        platform: event
-        event_type: ios.notification_action_fired
+        trigger: event
+        event_type: mobile_app_notification_action
         event_data:
-          actionName: SOUND_ALARM
+          action: SOUND_ALARM
       timeout: "01:00:00"
       continue_on_timeout: false
-    - service: light.turn_on
+    - action: light.turn_on
       entity_id: all
       data:
         flash: long
         color_name: red
 
-- alias: "Security: door has been open for more than 5 minutes"
-  trigger:
-    platform: state
+- alias: "Security: front door has been open for more than 5 minutes"
+  triggers:
+    trigger: state
     entity_id: binary_sensor.openclose_front_door
     from: "off"
     to: "on"
     for: "00:05:00"
-  condition:
-    condition: state
-    entity_id: input_boolean.guest_mode
-    state: "off"
-  action:
-    service: notify.all_iphones
+  actions:
+    action: notify.all_iphones
     data:
       title: "Security"
-      message: "The door has been open for more than 5 minutes."
+      message: "The front door has been open for more than 5 minutes."
+
+- alias: "Security: utility room door has been open for more than 5 minutes"
+  triggers:
+    trigger: state
+    entity_id: binary_sensor.openclose_front_door
+    from: "off"
+    to: "on"
+    for: "00:05:00"
+  actions:
+    action: notify.all_iphones
+    data:
+      title: "Security"
+      message: "The utility room door has been open for more than 5 minutes."
 
 - alias: "Security: no one is home but high power usage"
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.no_one_home
       to: "on"
-    - platform: time_pattern
+    - trigger: time_pattern
       minutes: "/10"
-  condition:
+  conditions:
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "on"
     - condition: numeric_state
       entity_id: sensor.power_consumption
       above: 0.7
-  action:
-    service: notify.all_iphones
+  actions:
+    action: notify.all_iphones
     data:
       title: "Security"
       message: >
         No one is home and we are using a lot of energy
         ({{ states('sensor.power_consumption') }} kW now)! ⚡️
 
-- alias: "Security: office door has opened"
-  trigger:
-    platform: state
-    entity_id: binary_sensor.openclose_guest_room
+- alias: "Security: bathroom door has opened"
+  triggers:
+    trigger: state
+    entity_id: binary_sensor.openclose_bathroom
     to: "on"
-  condition:
+  conditions:
     condition: state
-    entity_id: input_boolean.office_door_open_warning
+    entity_id: input_boolean.bathroom_door_open_warning
     state: "on"
-  action:
-    - service: notify.bas
+  actions:
+    - action: notify.bas
       data:
         title: Security
         message: Office door opened!
-    - service: notify.mobile_app_basnijholt_iphone
+    - action: notify.iphone_bas
       data:
         title: Security
         message: Office door opened!
-    - service: light.turn_on
+    - action: light.turn_on
       data:
-        entity_id: light.philips_go
+        entity_id:
+          - light.philips_go
+          - light.desk_led
         flash: short
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.office_door_open_warning
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.bathroom_door_open_warning
+
+- alias: "Security: activity in master bedroom"
+  triggers:
+    trigger: state
+    entity_id: binary_sensor.activity_in_master_bedroom
+    to: "on"
+  conditions:
+    condition: state
+    entity_id: input_boolean.bedroom_activity_warning
+    state: "on"
+  actions:
+    - action: notify.bas
+      data:
+        title: Security
+        message: Activity bedroom!
+    - action: notify.iphone_bas
+      data:
+        title: Security
+        message: Activity bedroom!
+    - action: light.turn_on
+      data:
+        entity_id: light.desk_led
+        flash: short
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.bedroom_activity_warning
+
+- alias: "Security: Door to outside open"
+  description: ''
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.door_to_outside_open
+      to: 'on'
+      for:
+        seconds: 15
+  actions:
+    - repeat:
+        while:
+          - condition: state
+            entity_id: binary_sensor.door_to_outside_open
+            state: 'on'
+        sequence:
+          # First turning off such that the lights stay on
+          - action: light.turn_off
+            data:
+              entity_id:
+                - light.garage_outside
+                - light.outside_front_door
+                - light.bedroom_outside
+                - light.utility_room
+          - delay:
+              seconds: 1
+          - action: light.turn_on
+            data:
+              entity_id:
+                - light.garage_outside
+                - light.outside_front_door
+                - light.bedroom_outside
+                - light.utility_room
+              brightness_pct: 100
+          - delay:
+              seconds: 1
+  mode: single

@@ -9,83 +9,66 @@
 #
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Adaptive lighting: turn on and off switches"
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_select.sleep_mode
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start  # in case the states aren't properly restored
   variables:
     sleep_mode: "{{ states('input_select.sleep_mode') }}"
-  action:
+  actions:
     choose:
       - conditions: "{{ sleep_mode == 'off' }}"
         sequence:
-          - service: switch.turn_off
+          - action: switch.turn_off
             entity_id:
-              - switch.adaptive_lighting_half_and_dim
-              - switch.adaptive_lighting_half_and_dim_bed
-              - switch.adaptive_lighting_half_and_full
-              # sleep_modes
-              - switch.adaptive_lighting_sleep_mode_default
-              - switch.adaptive_lighting_sleep_mode_default_bed
+              - switch.adaptive_lighting_sleep_mode_bedroom
+              - switch.adaptive_lighting_sleep_mode_bedroom_led
               - switch.adaptive_lighting_sleep_mode_living_room
-          - service: switch.turn_on
-            entity_id:
-              - switch.adaptive_lighting_default
-              - switch.adaptive_lighting_default_bed
+              - switch.adaptive_lighting_sleep_mode_baby_room
 
       - conditions: "{{ sleep_mode == 'half' }}"
         sequence:
-          - service: switch.turn_off
+          - action: switch.turn_off
             entity_id:
-              - switch.adaptive_lighting_default
-              - switch.adaptive_lighting_default_bed
-              # sleep_modes
-              - switch.adaptive_lighting_sleep_mode_half_and_full
-          - service: switch.turn_on
+              - switch.adaptive_lighting_sleep_mode_living_room
+          - action: switch.turn_on
             entity_id:
-              - switch.adaptive_lighting_half_and_dim
-              - switch.adaptive_lighting_half_and_dim_bed
-              - switch.adaptive_lighting_half_and_full
-              # sleep_modes
-              - switch.adaptive_lighting_sleep_mode_half_and_dim
-              - switch.adaptive_lighting_sleep_mode_half_and_dim_bed
+              - switch.adaptive_lighting_sleep_mode_bedroom
+              - switch.adaptive_lighting_sleep_mode_bedroom_led
+              - switch.adaptive_lighting_sleep_mode_baby_room
 
       - conditions: "{{ sleep_mode == 'total' }}"
         sequence:
-          - service: switch.turn_off
+          - action: switch.turn_on
             entity_id:
-              - switch.adaptive_lighting_half_and_dim
-              - switch.adaptive_lighting_half_and_dim_bed
-              - switch.adaptive_lighting_half_and_full
-          - service: switch.turn_on
-            entity_id:
-              - switch.adaptive_lighting_default
-              - switch.adaptive_lighting_default_bed
-              # sleep_modes
-              - switch.adaptive_lighting_sleep_mode_default
-              - switch.adaptive_lighting_sleep_mode_default_bed
+              - switch.adaptive_lighting_sleep_mode_bedroom
+              - switch.adaptive_lighting_sleep_mode_bedroom_led
+              - switch.adaptive_lighting_sleep_mode_baby_room
+              # The living room is set by another automation which
+              # only executes when no-one is in the living room.
+              # See the automations in `sleep_mode.yaml`!
 
 - alias: "Adaptive lighting: reset manual_control after 1 hour"
   mode: parallel
   max: 200
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: adaptive_lighting.manual_control
   variables:
     light: "{{ trigger.event.data.entity_id }}"
     switch: "{{ trigger.event.data.switch }}"
-  condition: "{{ 'hall' not in light and 'stairs' not in light }}"
-  action:
+  conditions: "{{ 'hall' not in light and 'stairs' not in light }}"
+  actions:
     - delay: "01:00:00"
     - condition: template
       value_template: "{{ light in state_attr('switch', 'manual_control') }}"
-    - service: adaptive_lighting.set_manual_control
+    - action: adaptive_lighting.set_manual_control
       data:
         entity_id: "{{ switch }}"
         lights: "{{ light }}"
         manual_control: false
-    - service: notify.mobile_app_basnijholt_iphone
+    - action: notify.iphone_bas
       data:
         title: "Adaptive Ligthing: manual_control reset"
         message: "{{ light }} is reset to not 'manually controlled'"
@@ -93,19 +76,19 @@
 - alias: "Adaptive lighting: notify manual_control"
   mode: parallel
   max: 20
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: adaptive_lighting.manual_control
   variables:
     light: "{{ trigger.event.data.entity_id }}"
-  condition: "{{ 'hall' not in light and 'stairs' not in light }}"
-  action:
-    - service: system_log.write
+  conditions: "{{ 'hall' not in light and 'stairs' not in light }}"
+  actions:
+    - action: system_log.write
       data:
         message: "{{ light }} is manually controlled"
         level: error
         logger: yolo.yolo
-    - service: notify.mobile_app_basnijholt_iphone
+    - action: notify.iphone_bas
       data:
         title: "Adaptive Ligthing: manual_control"
         message: "{{ light }} is now 'manually controlled', context={{ trigger.event.context }}"

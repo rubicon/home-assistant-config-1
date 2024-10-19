@@ -10,59 +10,59 @@
 #- from github.com/basnijholt/home-assistant-config
 
 - alias: "Night mode: automatically turn off when alarm turns off or at 7AM"
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "07:00"
-    - platform: state
+    - trigger: state
       entity_id: input_boolean.alarm_clock
       from: "on"
       to: "off"
-  condition:
+  conditions:
     condition: state
     entity_id: input_boolean.alarm_clock
     state: "off"
-  action:
+  actions:
     entity_id: input_select.sleep_mode
-    service: input_select.select_option
+    action: input_select.select_option
     data:
-      option: "off"
+      option: "half"
 
 - alias: "Night mode: turn off automatic bedroom lights"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: input_select.sleep_mode
     from: "off"
-  action:
-    service: input_boolean.turn_off
+  actions:
+    action: input_boolean.turn_off
     entity_id: input_boolean.automatic_bedroom_lights
 
 - alias: "Night mode: set low temperature when sleep mode turns on"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: input_select.sleep_mode
     from: "off"
-  action:
-    service: script.set_low_temperature
+  actions:
+    action: script.set_low_temperature
 
 - alias: "Night mode: go from half to total sleeping mode"
   description: >
     When it is half sleeping mode and there is no activity in
     the house for more than an hour go to total sleeping mode.
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: binary_sensor.activity_outside_bedroom
     to: "off"
     for: "01:00:00"
-  condition:
+  conditions:
     condition: state
     entity_id: input_select.sleep_mode
     state: half
-  action:
-    - service: input_select.select_option
+  actions:
+    - action: input_select.select_option
       entity_id: input_select.sleep_mode
       data:
         option: "total"
-    - service: notify.mobile_app_basnijholt_iphone
+    - action: notify.iphone_bas
       data:
         title: "Night mode"
         message: "Automatically switched from 'half' to 'total' sleeping mode! 💤🛌"
@@ -70,16 +70,16 @@
 - alias: "Night mode: set sleeping mode in the living room"
   description: >
     Set the living room lights to sleep mode only when no-one is there anymore.
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: input_select.sleep_mode
     to: "total"
-  action:
+  actions:
     choose:
       - conditions: "{{ is_state('binary_sensor.activity_in_living_room', 'on') }}"
         sequence:
           - wait_for_trigger:
-              platform: state
+              trigger: state
               entity_id: binary_sensor.activity_in_living_room
               from: "on"
               to: "off"
@@ -88,9 +88,9 @@
           - condition: state # make sure sleep mode is still on
             entity_id: input_select.sleep_mode
             state: "total"
-          - service: switch.turn_on
+          - action: switch.turn_on
             entity_id: switch.adaptive_lighting_sleep_mode_living_room
       - conditions: "{{ is_state('binary_sensor.activity_in_living_room', 'off') }}"
         sequence:
-          service: switch.turn_on
+          action: switch.turn_on
           entity_id: switch.adaptive_lighting_sleep_mode_living_room

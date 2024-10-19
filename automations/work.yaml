@@ -9,50 +9,50 @@
 #
 #- from github.com/basnijholt/home-assistant-config
 - alias: "Work: go home notification"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: binary_sensor.worked_enough_today
     from: "off"
     to: "on"
-  condition:
+  conditions:
     - condition: state
       entity_id: binary_sensor.workday_sensor
       state: "on"
     - condition: state
       entity_id: input_boolean.work_hour_notification_sent
       state: "off"
-  action:
-    - service: notify.mobile_app_basnijholt_iphone
+  actions:
+    - action: notify.iphone_bas
       data:
         title: "Work"
         message: "You have worked 8 hours today, very good! Go home 🎉"
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.work_hour_notification_sent
 
 - alias: "Work: reset input_boolean at midnight"
-  trigger:
-    platform: time
+  triggers:
+    trigger: time
     at: "00:00"
-  condition:
+  conditions:
     condition: state
     entity_id: input_boolean.work_hour_notification_sent
     state: "on"
-  action:
-    service: input_boolean.turn_off
+  actions:
+    action: input_boolean.turn_off
     entity_id: input_boolean.work_hour_notification_sent
 
 - alias: "Work: Bas left work notification for Marcella"
-  trigger:
-    platform: state
+  triggers:
+    trigger: state
     entity_id: person.bas
     from: "Work"
-  condition:
+  conditions:
     condition: time
     after: "15:00:00"
     before: "22:00:00"
-  action:
-    # service: notify.mobile_app_marcella_iphone
-    service: notify.all_iphones
+  actions:
+    # action: notify.mobile_app_marcella_iphone
+    action: notify.all_iphones
     data:
       title: "Work"
       message: "Bas has left work! ♥️🎉"

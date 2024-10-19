@@ -11,15 +11,15 @@
 
 - alias: "Leaving: automatically turn off everything"
   initial_state: "on"
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.someone_in_the_house_in_last_hour
       from: "on"
       to: "off"
       for: "00:01:00"
-    - platform: time_pattern
+    - trigger: time_pattern
       hours: "/1"
-  condition:
+  conditions:
     - condition: state
       entity_id:
         - binary_sensor.no_one_home
@@ -30,23 +30,23 @@
         - binary_sensor.someone_in_the_house_in_last_hour
         - input_boolean.guest_mode
       state: "off"
-  action:
-    - service: script.leaving
-    - service: notify.all_iphones
+  actions:
+    - action: script.leaving
+    - action: notify.all_iphones
       data:
         title: "Leaving"
         message: "Everything automatically turned off!"
 
 - alias: "Leaving: ask to turn off everything"
   initial_state: "on"
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: person.bas
       from: "home"
-    - platform: state
+    - trigger: state
       entity_id: person.marcella
       from: "home"
-  condition:
+  conditions:
     - condition: state
       entity_id:
         - binary_sensor.no_one_home
@@ -55,45 +55,49 @@
     - condition: state
       entity_id: input_boolean.guest_mode
       state: "off"
-  action:
+  actions:
     - delay: "00:05:00" # something still needs to be on in 5 min
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "on"
-    - service: notify.all_iphones
+    - action: notify.all_iphones
       data:
         message: "No one is home, turn off everything?"
         data:
-          push:
-            category: turn_off_everything
+          actions:
+            - action: TURN_OFF_EVERYTHING
+              title: Turn off everything
+              activationMode: background
+              authenticationRequired: false
+              destructive: true
 
 - alias: "Leaving: turn off everything after notification"
-  trigger:
-    platform: event
-    event_type: ios.notification_action_fired
+  triggers:
+    trigger: event
+    event_type: mobile_app_notification_action
     event_data:
-      actionName: TURN_OFF_EVERYTHING
-  action:
-    service: script.leaving
+      action: TURN_OFF_EVERYTHING
+  actions:
+    action: script.leaving
 
 
 - alias: "Leaving: downstairs Aqara Wireless Mini Switch"
-  trigger:
-    platform: event
+  triggers:
+    trigger: event
     event_type: deconz_event
     event_data:
-      id: smart_switch_downstairs
+      id: smart_switch_door
       event: 1002  # single click
-  action:
+  actions:
     - wait_for_trigger:  # when the door closes, turn off everything
-        platform: state
+        trigger: state
         entity_id: binary_sensor.openclose_front_door
         from: "on"
         to: "off"
       timeout: "00:01:00"
       continue_on_timeout: false
-    - service: script.turn_off_everything
-    - service: notify.all_iphones
+    - action: script.turn_off_everything
+    - action: notify.all_iphones
       data:
         title: "Bye 👋"
         message: "See you soon!"

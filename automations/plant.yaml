@@ -8,56 +8,56 @@
 # |_|
 #
 #- from github.com/basnijholt/home-assistant-config
-- alias: "Plant: problem with Ficus microcarpa Ginseng"
-  trigger:
-    - platform: state
-      entity_id: plant.ficus_microcarpa_ginseng
+- alias: "Plant: problem with Calathea"
+  triggers:
+    - trigger: state
+      entity_id: plant.calathea
       to: "problem"
-    - platform: time
+    - trigger: time
       at: "20:00"
-  condition:
+  conditions:
     condition: state
-    entity_id: plant.ficus_microcarpa_ginseng
+    entity_id: plant.calathea
     state: "problem"
-  action:
-    service: notify.all_iphones
+  actions:
+    action: notify.all_iphones
     data:
       title: "Plant in trouble! ⚠️☢️☠️"
       message: >
-        You need to give the Ficus microcarpa Ginseng 🌳 attention and love: {{ state_attr("plant.ficus_microcarpa_ginseng", "problem") }}!
+        You need to give the Calathea 🌳 attention and love: {{ state_attr("plant.calathea", "problem") }}!
 
-- alias: "Plant: problem with Kentia Palm"
-  trigger:
-    - platform: state
-      entity_id: plant.kentia_palm
+- alias: "Plant: problem with Monstera"
+  triggers:
+    - trigger: state
+      entity_id: plant.monstera
       to: "problem"
-    - platform: time
+    - trigger: time
       at: "20:00"
-  condition:
+  conditions:
     condition: state
-    entity_id: plant.kentia_palm
+    entity_id: plant.monstera
     state: "problem"
-  action:
-    service: notify.all_iphones
+  actions:
+    action: notify.all_iphones
     data:
       title: "Plant in trouble! ⚠️☢️☠️"
       message: >
-        You need to give the Kentia Palm 🌴 attention and love: {{ state_attr("plant.kentia_palm", "problem") }}!
+        You need to give the Monstera 🌴 attention and love: {{ state_attr("plant.monstera", "problem") }}!
 
-- alias: "Plant: problem with Yucca Elephantipes"
-  trigger:
-    - platform: state
-      entity_id: plant.yucca_elephantipes
+- alias: "Plant: problem with Peace lily"
+  triggers:
+    - trigger: state
+      entity_id: plant.peace_lily
       to: "problem"
-    - platform: time
+    - trigger: time
       at: "20:00"
-  condition:
+  conditions:
     condition: state
-    entity_id: plant.yucca_elephantipes
+    entity_id: plant.peace_lily
     state: "problem"
-  action:
-    service: notify.all_iphones
+  actions:
+    action: notify.all_iphones
     data:
       title: "Plant in trouble! ⚠️☢️☠️"
       message: >
-        You need to give the Yucca Elephantipes 🌿 attention and love: {{ state_attr("plant.yucca_elephantipes", "problem") }}!
+        You need to give the Peace lily 🌿 attention and love: {{ state_attr("plant.peace_lily", "problem") }}!

@@ -20,7 +20,7 @@
   sensors:
     dishwasher_watts:
       value_template: >
-        {{ state_attr("switch.dishwasher", "current_power_w") | replace(" W", "") | float("Unavailable") }}
+        {{ state_attr("switch.dishwasher", "power") | float("Unavailable") }}
       unit_of_measurement: Watt
       friendly_name: Dishwasher usage
 
@@ -74,7 +74,7 @@
 
     favorite_playlist_of_nearest_person:
       value_template: >
-        {% if is_state_attr("proximity.home", "nearest", "basnijholt-iphone") %}
+        {% if is_state_attr("sensor.home_nearest_device", "Bas") %}
         6rPTm9dYftKcFAfwyRqmDZ
         {% else %}
         6rPTm9dYftKcFAfwyRqmDZ
@@ -90,11 +90,6 @@
         {{ state_attr("media_player.kef_ls50", "volume_level") }}
       unit_of_measurement: "%"
 
-    kef_lsx_volume:
-      value_template: >
-        {{ state_attr("media_player.kef_lsx", "volume_level") }}
-      unit_of_measurement: "%"
-
     timestamp_start_of_today:
       value_template: >
         {{ as_timestamp(now().replace(hour=0).replace(minute=0).replace(second=0)) }}
@@ -103,8 +98,8 @@
     time_at_work_prognosis:
       value_template: >
         {% set day = [now().weekday(), 4] | min %}
-        {% set t_total = states("sensor.time_at_work_this_week")|float %}
-        {% set t_today = states("sensor.time_at_work_today")|float %}
+        {% set t_total = states("sensor.time_at_work_this_week")|float(0) %}
+        {% set t_today = states("sensor.time_at_work_today")|float(0) %}
         {% set hours_per_day_including_today = t_total / (day + 1) %}
         {% set hours_per_day_excluding_today = (t_total - t_today ) / (day + 10**-16) %}
         {% set seven_oclock = as_timestamp(now().replace(hour=19).replace(minute=0).replace(second=0)) %}
@@ -133,26 +128,26 @@
       friendly_name: Daily Power
       unit_of_measurement: kWh
       value_template: >
-        {{ states("sensor.daily_power_offpeak")|float + states("sensor.daily_power_peak")|float }}
+        {{ states("sensor.daily_power_offpeak")|float(0) + states("sensor.daily_power_peak")|float(0) }}
 
     monthly_power:
       friendly_name: Monthly Power
       unit_of_measurement: kWh
       value_template: >
-        {{ states("sensor.monthly_power_offpeak")|float + states("sensor.monthly_power_peak")|float }}
+        {{ states("sensor.monthly_power_offpeak")|float(0) + states("sensor.monthly_power_peak")|float(0) }}
 
     monthly_power_last_period:
       friendly_name: Monthly Power (Last period)
       unit_of_measurement: kWh
       value_template: >
-        {{ state_attr("sensor.monthly_power_offpeak", "last_period")|float + state_attr("sensor.monthly_power_peak", "last_period")|float }}
+        {{ state_attr("sensor.monthly_power_offpeak", "last_period")|float(0) + state_attr("sensor.monthly_power_peak", "last_period")|float(0) }}
 
     monthly_power_cost_last_period:
       friendly_name: Monthly Power (Last period)
       unit_of_measurement: €
       value_template: >
-        {{ (state_attr("sensor.monthly_power_offpeak", "last_period")|float * states("sensor.electricity_price_offpeak")|float
-            + state_attr("sensor.monthly_power_peak", "last_period")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
+        {{ (state_attr("sensor.monthly_power_offpeak", "last_period")|float(0) * states("sensor.electricity_price_offpeak")|float(0)
+            + state_attr("sensor.monthly_power_peak", "last_period")|float(0) * states("sensor.electricity_price_peak")|float(0)) | round(2) }}
 
     gas_price:
       friendly_name: Gas price
@@ -164,19 +159,19 @@
       friendly_name: Daily Power
       unit_of_measurement: €
       value_template: >
-        {{ (states("sensor.daily_gas")|float * 0.7884) | round(2) }}
+        {{ (states("sensor.daily_gas")|float(0) * 0.7884) | round(2) }}
 
     monthly_gas_cost:
       friendly_name: Monthly Power
       unit_of_measurement: €
       value_template: >
-        {{ (states("sensor.monthly_gas")|float * 0.7884) | round(2) }}
+        {{ (states("sensor.monthly_gas")|float(0) * 0.7884) | round(2) }}
 
     monthly_gas_cost_last_period:
       friendly_name: Monthly Power (Last period)
       unit_of_measurement: €
       value_template: >
-        {{ (state_attr("sensor.monthly_gas", "last_period")|float * 0.7884) | round(2) }}
+        {{ (state_attr("sensor.monthly_gas", "last_period")|float(0) * 0.7884) | round(2) }}
 
     electricity_price_offpeak:
       friendly_name: Electricity price
@@ -194,15 +189,15 @@
       friendly_name: Daily Power
       unit_of_measurement: €
       value_template: >
-        {{ (states("sensor.daily_power_offpeak")|float * states("sensor.electricity_price_offpeak")|float
-            + states("sensor.daily_power_peak")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
+        {{ (states("sensor.daily_power_offpeak")|float(0) * states("sensor.electricity_price_offpeak")|float(0)
+            + states("sensor.daily_power_peak")|float(0) * states("sensor.electricity_price_peak")|float(0)) | round(2) }}
 
     monthly_power_cost:
       friendly_name: Monthly Power
       unit_of_measurement: €
       value_template: >
-        {{ (states("sensor.monthly_power_offpeak")|float * states("sensor.electricity_price_offpeak")|float
-            + states("sensor.monthly_power_peak")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
+        {{ (states("sensor.monthly_power_offpeak")|float(0) * states("sensor.electricity_price_offpeak")|float(0)
+            + states("sensor.monthly_power_peak")|float(0) * states("sensor.electricity_price_peak")|float(0)) | round(2) }}
 
     daily_energy_fixed_cost:
       friendly_name: Fixed daily energy cost (gas and power)
@@ -216,21 +211,21 @@
       friendly_name: Fixed daily energy cost (gas and power)
       unit_of_measurement: €
       value_template: >
-        {{ states("sensor.daily_energy_fixed_cost")|float * now().day }}
+        {{ states("sensor.daily_energy_fixed_cost")|float(0) * now().day }}
 
     monthly_energy_fixed_cost_last_period:
       friendly_name: Fixed energy cost (gas and power) (Last period)
       unit_of_measurement: €
       value_template: >
-        {{ states("sensor.daily_energy_fixed_cost")|float * states("sensor.n_days_last_month")|int }}
+        {{ states("sensor.daily_energy_fixed_cost")|float(0) * states("sensor.n_days_last_month")|int(0) }}
 
     nearest_iphone_notify:
       friendly_name: Nearest iPhone's notify service
       value_template: >
         {% if is_state("person.bas", "home") and is_state("person.marcella", "home") %}
           notify.all_iphones
-        {% elif is_state_attr("proximity.home", "nearest", "basnijholt-iphone") %}
-          notify.mobile_app_basnijholt_iphone
+        {% elif is_state_attr("sensor.home_nearest_device", "Bas") %}
+          notify.iphone_bas
         {% else %}
           notify.mobile_app_marcella_iphone
         {% endif %}
@@ -251,22 +246,34 @@
         {% set before_alarm = t_alarm + t_start - 60 * 10 %}
         {{ before_alarm | timestamp_custom("%H:%M", True) }}
 
-    hours_outside_per_day_marcella: # XXX: fails when returns "0m"
-      friendly_name: Ten minutes before alarm
+    # Includes fix from https://github.com/basnijholt/home-assistant-config/issues/32
+    hours_outside_per_day_marcella:
+      friendly_name: Hours outside per day (Marcella)
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_marcella", "value") %}
         {% if value != None %}
+
+        {% set nargs = 1 + (value | length) - (value.replace(' ', '') | length) %}
+        {% if nargs < 2 %}{% set value = "0h " ~ value %}{% endif %}
+        {% if nargs < 3 %}{% set value = "0d " ~ value %}{% endif %}
+
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
         {% set hours_outside = ((14 - d) * 86400 - h * 3600 - m * 60) / 3600 %}
         {{ (hours_outside / 14) | round(1) }}
         {% endif %}
 
-    hours_outside_per_day_bas: # XXX: fails when returns "0m"
-      friendly_name: Ten minutes before alarm
+    # Includes fix from https://github.com/basnijholt/home-assistant-config/issues/32
+    hours_outside_per_day_bas:
+      friendly_name: Hours outside per day (Marcella)
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_bas", "value") %}
         {% if value != None %}
+
+        {% set nargs = 1 + (value | length) - (value.replace(' ', '') | length) %}
+        {% if nargs < 2 %}{% set value = "0h " ~ value %}{% endif %}
+        {% if nargs < 3 %}{% set value = "0d " ~ value %}{% endif %}
+
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
         {% set hours_outside = ((14 - d) * 86400 - h * 3600 - m * 60) / 3600 %}
@@ -296,18 +303,26 @@
     lights_on_total_hours:
       unit_of_measurement: h
       value_template: >
-        {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float * 7
-            + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float * 5
-            + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float * 1
-            + states('sensor.hours_bathroom_light_has_been_on_last_7_days')|float * 1
-            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float * 2
-            + states('sensor.hours_hall_lights_have_been_on_last_7_days')|float * 5
-            + states('sensor.hours_bathroom_light_has_been_on_last_7_days')|float * 1 }}
+        {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float(0) * 7
+            + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float(0) * 5
+            + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float(0) * 1
+            + states('sensor.hours_bathroom_light_has_been_on_last_7_days')|float(0) * 1
+            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float(0) * 2
+            + states('sensor.hours_hall_lights_have_been_on_last_7_days')|float(0) * 5
+            + states('sensor.hours_bathroom_light_has_been_on_last_7_days')|float(0) * 1 }}
 
     lights_on_total_kwh:
       unit_of_measurement: h
       value_template: >
-        {{ states('sensor.lights_on_total_hours')|float * 5.4 / 1000 }}
+        {{ states('sensor.lights_on_total_hours')|float(0) * 5.4 / 1000 }}
+
+    robot_vacuum_last_clean_duration:
+      unit_of_measurement: s
+      value_template: >
+        {% set t_start = state_attr("input_datetime.vacuum_on", "timestamp") | int %}
+        {% set t_off = state_attr("input_datetime.vacuum_off", "timestamp") | int %}
+        {% set duration = t_off - t_start %}
+        {{ duration }}
 
 #   ___  _   _
 #  / _ \| |_| |__   ___ _ __ ___
@@ -321,6 +336,7 @@
   entity_id: sensor.humidity_bathroom
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age: "24:00:00"
+  state_characteristic: mean
 
 - platform: derivative
   source: sensor.humidity_bathroom
@@ -343,81 +359,11 @@
     - date
     - time
 
-# Set up on Proxmox https://community.home-assistant.io/t/intel-nuc-proxmox-cpu-temperature-monitor-with-python-mqtt/194236/8
-- platform: mqtt
-  name: CPU Temperature
-  state_topic: "pve/cpu_temp"
-  unit_of_measurement: "°C"
-  value_template: "{{ value | multiply(0.001) | round(1) }}"
-
-- platform: systemmonitor
-  resources:
-    - type: disk_use_percent
-      arg: "/"
-    - type: memory_use_percent
-    - type: network_in
-      arg: eth0
-    - type: network_out
-      arg: eth0
-    - type: processor_use
-    - type: last_boot
-
-- platform: dnsip
-
-- platform: version
-  name: Installed Version
-  source: local
-
-- platform: version
-  name: Latest Available Version
-  beta: false
-  image: raspberrypi4
-  source: hassio
-
-- platform: uptime
-
-- platform: filesize
-  file_paths:
-    - /config/.storage/lovelace
-
-- platform: sql
-  db_url: !secret maria_db_url
-  queries:
-    - name: MariaDB size
-      query: >
-        SELECT table_schema AS "database",
-        ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) "value"
-        FROM information_schema.tables WHERE table_schema="homeassistant"
-        GROUP BY table_schema;
-      column: value
-      unit_of_measurement: MB
-
-- platform: github
-  access_token: !secret hass_sensor_gh_token
-  repositories:
-    - path: "basnijholt/lovelace-ios-dark-mode-theme"
-    - path: "basnijholt/lovelace-ios-light-mode-theme"
-    - path: "basnijholt/lovelace-ios-themes"
-    - path: "python-adaptive/adaptive"
-    - path: "basnijholt/home-assistant-config"
-
-- platform: dutch_public_transport_api
-  name: Bus from Rotterdam to Delft
-  station: !secret bus_stop_to_delft
-  destination: Station Delft
-  show_future_departures: 1
-
-- platform: dutch_public_transport_api
-  name: Bus from Delft to Rotterdam
-  station: delft/bushalte-tu-mekelpark
-  destination: Rotterdam Centraal
-  show_future_departures: 1
-
-- platform: dutch_public_transport_api
-  name: Bus home to Rotterdam Centraal
-  station: !secret bus_stop_in_front
-  destination: Rotterdam Centraal
-  show_future_departures: 1
+- platform: file
+  name: contractions_csv
+  file_path: "/config/utils/contractions_log.csv"
+  value_template: "{{ value }}"
+  scan_interval: 1
 
 #  _____ _                  _                  _
 # |_   _(_)_ __ ___   ___  | |_ _ __ __ _  ___| | _____ _ __ ___
@@ -563,7 +509,7 @@
 
 - platform: history_stats
   name: Hours bathroom light has been on last 7 days
-  entity_id: light.ceiling_bathroom
+  entity_id: light.bathroom_ceiling
   state: "on"
   type: time
   duration:
@@ -583,7 +529,7 @@
   state: Work
   type: time
   start: >
-    {{ states("sensor.timestamp_start_of_today")|float - now().weekday() * 86400 }}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - now().weekday() * 86400 }}
   end: "{{ now() }}"
 
 - platform: history_stats
@@ -592,7 +538,7 @@
   state: Work
   type: time
   start: >
-    {{ states("sensor.timestamp_start_of_today")|float - 0 * 86400 }}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - 0 * 86400 }}
   duration:
     hours: 24
 
@@ -606,7 +552,7 @@
   start: >
     {% set day = now().weekday() - 0 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Tuesday
@@ -618,7 +564,7 @@
   start: >
     {% set day = now().weekday() - 1 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Wednessday
@@ -630,7 +576,7 @@
   start: >
     {% set day = now().weekday() - 2 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Thursday
@@ -642,7 +588,7 @@
   start: >
     {% set day = now().weekday() - 3 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Friday
@@ -654,7 +600,7 @@
   start: >
     {% set day = now().weekday() - 4 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(0) - day * 86400}}
 
 #  ____                                          _    ____
 # |  _ \ _____      _____ _ __    __ _ _ __   __| |  / ___| __ _ ___
@@ -664,50 +610,50 @@
 
 # From the "Meterkast" Home Assistant
 
-- platform: mqtt
-  state_topic: homeassistant/sensor/gas_consumption/state
-  unit_of_measurement: m³
-  name: Gas Consumption
-  icon: mdi:fire
-  device_class: gas
-  state_class: total_increasing
+# - platform: mqtt
+#   state_topic: homeassistant/sensor/gas_consumption/state
+#   unit_of_measurement: m³
+#   name: Gas Consumption
+#   icon: mdi:fire
+#   device_class: gas
+#   state_class: total_increasing
 
-- platform: mqtt
-  state_topic: homeassistant/sensor/hourly_gas_consumption/state
-  unit_of_measurement: m³/h
-  name: Hourly Gas Consumption
-  icon: mdi:fire
-  device_class: gas
-  state_class: total_increasing
+# - platform: mqtt
+#   state_topic: homeassistant/sensor/hourly_gas_consumption/state
+#   unit_of_measurement: m³/h
+#   name: Hourly Gas Consumption
+#   icon: mdi:fire
+#   device_class: gas
+#   state_class: total_increasing
 
-- platform: mqtt
-  state_topic: homeassistant/sensor/power_consumption/state
-  unit_of_measurement: kW
-  name: Power Consumption
-  icon: mdi:flash
-  device_class: power
-  state_class: measurement
+# - platform: mqtt
+#   state_topic: homeassistant/sensor/power_consumption/state
+#   unit_of_measurement: kW
+#   name: Power Consumption
+#   icon: mdi:flash
+#   device_class: power
+#   state_class: measurement
 
-- platform: mqtt
-  state_topic: homeassistant/sensor/energy_consumption_tarif_1/state
-  unit_of_measurement: kWh
-  name: Energy Consumption (tarif 1)
-  icon: mdi:flash
-  device_class: energy
-  state_class: total_increasing
+# - platform: mqtt
+#   state_topic: homeassistant/sensor/energy_consumption_tarif_1/state
+#   unit_of_measurement: kWh
+#   name: Energy Consumption (tarif 1)
+#   icon: mdi:flash
+#   device_class: energy
+#   state_class: total_increasing
 
-- platform: mqtt
-  state_topic: homeassistant/sensor/energy_consumption_tarif_2/state
-  unit_of_measurement: kWh
-  name: Energy Consumption (tarif 2)
-  icon: mdi:flash
-  device_class: energy
-  state_class: total_increasing
+# - platform: mqtt
+#   state_topic: homeassistant/sensor/energy_consumption_tarif_2/state
+#   unit_of_measurement: kWh
+#   name: Energy Consumption (tarif 2)
+#   icon: mdi:flash
+#   device_class: energy
+#   state_class: total_increasing
 
-- platform: mqtt
-  state_topic: homeassistant/sensor/power_tariff/state
-  name: Power Tariff
-  icon: mdi:flash
+# - platform: mqtt
+#   state_topic: homeassistant/sensor/power_tariff/state
+#   name: Power Tariff
+#   icon: mdi:flash
 
 - platform: filter
   name: "Gas consumption filtered"
@@ -729,145 +675,3 @@
   name: Gas per hour (filtered)
   unit: m³/h
   unit_time: h
-
-#  ____  _             _
-# |  _ \| | __ _ _ __ | |_ ___
-# | |_) | |/ _` | '_ \| __/ __|
-# |  __/| | (_| | | | | |_\__ \
-# |_|   |_|\__,_|_| |_|\__|___/
-#
-
-# - platform: miflora
-#   mac: "80:EA:CA:89:1A:4E"
-#   name: "Mi Flora: Yucca Elephantipes"
-
-# # https://www.growabonsaitree.com/species/ficus-bonsai/
-# - platform: miflora
-#   mac: "80:EA:CA:89:20:24"
-#   name: "Mi Flora: Ficus microcarpa Ginseng"
-
-# Kentia Palm
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_kentia_palm_battery/state
-  unit_of_measurement: "%"
-  name: "Mi Flora: Kentia Palm Battery"
-  icon: mdi:battery-charging
-  device_class: battery
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_kentia_palm_conductivity/state
-  unit_of_measurement: µS/cm
-  name: "Mi Flora: Kentia Palm Conductivity"
-  icon: mdi:flash-circle
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_kentia_palm_light_intensity/state
-  unit_of_measurement: lx
-  name: "Mi Flora: Kentia Palm Light intensity"
-  icon: mdi:white-balance-sunny
-  device_class: illuminance
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_kentia_palm_moisture/state
-  unit_of_measurement: "%"
-  name: "Mi Flora: Kentia Palm Moisture"
-  icon: mdi:water-percent
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_kentia_palm_temperature/state
-  unit_of_measurement: °C
-  name: "Mi Flora: Kentia Palm Temperature"
-  icon: mdi:thermometer
-  device_class: temperature
-  state_class: measurement
-
-# Royal Haze
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_royal_haze_battery/state
-  unit_of_measurement: "%"
-  name: "Mi Flora: Royal Haze Battery"
-  icon: mdi:battery-charging
-  device_class: battery
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_royal_haze_conductivity/state
-  unit_of_measurement: µS/cm
-  name: "Mi Flora: Royal Haze Conductivity"
-  icon: mdi:flash-circle
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_royal_haze_light_intensity/state
-  unit_of_measurement: lx
-  name: "Mi Flora: Royal Haze Light intensity"
-  icon: mdi:white-balance-sunny
-  device_class: illuminance
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_royal_haze_moisture/state
-  unit_of_measurement: "%"
-  name: "Mi Flora: Royal Haze Moisture"
-  icon: mdi:water-percent
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_royal_haze_temperature/state
-  unit_of_measurement: °C
-  name: "Mi Flora: Royal Haze Temperature"
-  icon: mdi:thermometer
-  device_class: temperature
-  state_class: measurement
-
-# Northern Light
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_northern_light_battery/state
-  unit_of_measurement: "%"
-  name: "Mi Flora: Northern Light Battery"
-  icon: mdi:battery-charging
-  device_class: battery
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_northern_light_conductivity/state
-  unit_of_measurement: µS/cm
-  name: "Mi Flora: Northern Light Conductivity"
-  icon: mdi:flash-circle
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_northern_light_light_intensity/state
-  unit_of_measurement: lx
-  name: "Mi Flora: Northern Light Light intensity"
-  icon: mdi:white-balance-sunny
-  device_class: illuminance
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_northern_light_moisture/state
-  unit_of_measurement: "%"
-  name: "Mi Flora: Northern Light Moisture"
-  icon: mdi:water-percent
-  state_class: measurement
-
-- platform: mqtt
-  state_topic: homeassistant/sensor/mi_flora_northern_light_temperature/state
-  unit_of_measurement: °C
-  name: "Mi Flora: Northern Light Temperature"
-  icon: mdi:thermometer
-  device_class: temperature
-  state_class: measurement
-
-- platform: command_line
-  command: !secret portfolio_value
-  name: portfolio_value
-  unit_of_measurement: '€'
-  scan_interval: 20
